@@ -1,0 +1,20 @@
+create a new game
+    creates a new - empty - state
+    add - empty - state to list of available games
+    -- wait for additional players --
+
+
+list games 
+    show a list of all games that are waiting for players
+    join the game:
+        ask the person who created the game if player can join
+            if yes: add player to game state
+            if no: discard the request
+
+
+deal
+    work out a random order of 52 cards, place them into 'face-down'
+    in a loop around each player, give each player the first card from the 'face-down' pile - add it to their 'hand', then remove it from the pile
+    repeat until all players have 7 cards each
+    randomly select one of the players, assign them to the 'current-player'
+    set status to playing
