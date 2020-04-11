@@ -1,0 +1,15 @@
+{
+  "name": "rummy",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.5",
+    "express": "3.1.0",
+    "form-data": "^2.1.2",
+    "socket.io": "1.4.8",
+    "uuid": "^7.0.3"
+  }
+}
