@@ -14,14 +14,7 @@ app.configure(function () {
     app.use(express.methodOverride());
     app.use(cookieParser());
     app.use(app.router);
-});
-
-app.get('/', function(request, response) {
-    var formHtml = fs.readFileSync('./index.html');
-    var user = session.getUser(request, response);
-
-	response.contentType("text/html");
-	response.send(formHtml);
+    app.use(express.static('static'));
 });
 
 app.get('/Status', function(request, response) {
