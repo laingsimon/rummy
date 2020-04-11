@@ -328,6 +328,33 @@ app.get('/Eject/:gameId/:userId', function(request, response) {
     response.end();
 });
 
+app.get('/Start/:gameId', function(request, response) {
+    var game = rummy.game(request.params.gameId);
+    var user = session.getUser(request, response);
+
+    if (!game) {
+        response.status(404);
+        response.send("Game not found");
+        response.end();
+        return;
+    }
+
+    var gameState = game.getContent();
+    if (user.id !== gameState.game.owner.id) {
+        response.status(403);
+        response.send("Only the owner can do this");
+        response.end();
+        return;
+    }
+    game.updateContent({
+        status: "dealing"
+    });
+
+    response.status(202);
+    response.send("Dealing...");
+    response.end();
+});
+
 http.createServer(app).listen(port, function () {
     console.log("Express server listening on port " + port);
 });
