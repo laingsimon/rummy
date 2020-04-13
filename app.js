@@ -5,8 +5,13 @@ var fs = require('fs');
 var app = express();
 var port = 8082;
 var rummy = require('./rummy.js');
+//var users = require('./users.js');
 var session = require('./session.js');
 var cookieParser = require('cookie-parser');
+const { v4: uuidv4 } = require('uuid');
+const { Dealer } = require('./Dealer.js');
+const { Player } = require('./Player.js');
+const { Game } = require('./Game.js');
 
 app.configure(function () {
     app.set('port', port);
@@ -23,331 +28,94 @@ app.get('/Status', function(request, response) {
     response.end();
 });
 
-app.get('/Name/:name', function(request, response) {
-    var userName = request.params.name;
-    var user = session.setUserName(request, response, userName);
-
-    response.send(user);
-    response.end();
-});
-
-app.get('/Games', function(request, response) {
-    var games = rummy.games().map(
-        game => {
-            return rummy.mapGameStateToOverview(game.getContent());
-        }
-    );
-
-    response.send(games);
-    response.end();
-});
-
-app.get('/NewGame', function(request, response) {
-    var user = session.getUser(request, response);
-
-    response.send(rummy.mapGameStateToOverview(rummy.newGame(user)));
-    response.end();
-});
-
-app.get('/Join/:gameId', function(request, response) {
-    var user = session.getUser(request, response);
-    var gameId = request.params.gameId;
-
-    if (!gameId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    var game = rummy.game(gameId);
-    if (!game) {
-        response.status(404);
-        response.send("Game not found");
-        response.end();
-        return;
-    }
-
-    var gameState = game.getContent();
-
-    if (gameState.status !== "waiting-for-players") {
-        response.status(403);
-        response.send("Game is not join-able");
-        response.end();
-        return;
-    }
-
-    if (gameState.players.filter(player => player.id === user.id).length > 0) {
-        response.status(200);  //already in the game
-        response.send("You're already in the game");
-        response.end();
-        return;
-    }
-
-    var lobby = gameState.lobby || [];
-    if (lobby.filter(u => u.id === user.id).length > 0) {
-        response.status(202);  //already in the lobby
-        response.send("You're already in the lobby");
-        response.end();
-        return;
-    }
-
-    var newLobby = lobby.concat([ user ]);
-    game.updateContent({
-        lobby: newLobby
-    })
-
-    response.status(202);
-    response.send("You're in the lobby - the owner will admit you");
-    response.end();
-});
-
-app.get('/Accept/:gameId/:userId', function(request, response) {
-    var user = session.getUser(request, response);
-    var gameId = request.params.gameId;
-    var userId = request.params.userId;
-
-    if (!gameId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    if (!userId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    var game = rummy.game(gameId);
-    if (!game) {
-        response.status(404);
-        response.send("Game not found");
-        response.end();
-        return;
-    }
-
-    var gameState = game.getContent();
-
-    if (user.id !== gameState.game.owner.id) {
-        response.status(403);
-        response.send("Only the owner can do this");
-        response.end();
-        return;
-    }
-
-    if (gameState.status !== "waiting-for-players") {
-        response.status(403);
-        response.send("Game is not join-able");
-        response.end();
-        return;
-    }
-
-    var lobby = gameState.lobby;
-    if (lobby.filter(u => u.id === userId).length === 0) {
-        response.status(403);
-        response.send("User has not asked to join this game");
-        response.end();
-        return;
-    }
-
-    var newLobby = lobby.filter(u => u.id !== userId);
-    game.updateContent({
-        lobby: newLobby
-    });
-
-    if (gameState.players.filter(player => player.id === userId).length > 0) {
-        response.status(200);  //already in the game
-        response.send("You're already in the game");
-        response.end();
-        return;
-    }
-
-    var newPlayer = {
-        name: session.getUserName(userId),
-        id: userId,
-        hand: null,
-        considering: []
-    };
-    game.updateContent({
-        players: gameState.players.concat([ newPlayer ])
-    });
-    response.status(200);
-    response.send("They're now part of the game");
-    response.end();
-    return;
-});
-
-app.get('/Reject/:gameId/:userId', function(request, response) {
-    var user = session.getUser(request, response);
-    var gameId = request.params.gameId;
-    var userId = request.params.userId;
-
-    if (!gameId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    if (!userId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    var game = rummy.game(gameId);
-    if (!game) {
-        response.status(404);
-        response.send("Game not found");
-        response.end();
-        return;
-    }
-
-    var gameState = game.getContent();
-
-    if (user.id !== gameState.game.owner.id) {
-        response.status(403);
-        response.send("Only the owner can do this");
-        response.end();
-        return;
-    }
-
-    if (gameState.status !== "waiting-for-players") {
-        response.status(403);
-        response.send("Game is not join-able");
-        response.end();
-        return;
-    }
-
-    var lobby = gameState.lobby;
-    if (lobby.filter(u => u.id === userId).length === 0) {
-        response.status(200);
-        response.send("User has not asked to join this game");
-        response.end();
-        return;
-    }
-
-    var newLobby = lobby.filter(u => u.id !== userId);
-    game.updateContent({
-        lobby: newLobby
-    });
-
-    response.status(200);
-    response.send("They've been removed from the lobby");
-    response.end();
-    return;
-});
-
-app.get('/Eject/:gameId/:userId', function(request, response) {
-    var user = session.getUser(request, response);
-    var gameId = request.params.gameId;
-    var userId = request.params.userId;
-
-    if (!gameId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    if (!userId) {
-        response.status(400);
-        response.send("No gameId supplied");
-        response.end();
-        return;
-    }
-
-    var game = rummy.game(gameId);
-    if (!game) {
-        response.status(404);
-        response.send("Game not found");
-        response.end();
-        return;
-    }
-
-    var gameState = game.getContent();
-
-    if (user.id !== gameState.game.owner.id) {
-        response.status(403);
-        response.send("Only the owner can do this");
-        response.end();
-        return;
-    }
-
-    if (userId === gameState.game.owner.id) {
-        response.status(403);
-        response.send("You cannot remove yourself");
-        response.end();
-        return;
-    }
-
-    if (gameState.status !== "waiting-for-players") {
-        response.status(403);
-        response.send("Game has started");
-        response.end();
-        return;
-    }
-
-    var lobby = gameState.lobby;
-    var players = gameState.players;
-    var changesMade = false;
-    if (lobby.filter(u => u.id === userId).length > 0) {
-        lobby = lobby.filter(u => u.id !== userId);
-        changesMade = true;
-    }
-
-    if (players.filter(p => p.id === userId).length > 0) {
-        players = players.filter(p => p.id !== userId);
-        changesMade = true;
-    }
-
-    response.status(200);
-
-    if (changesMade) {
-        game.updateContent({
-            lobby: lobby,
-            players: players
-        });
-
-        response.send("They've been removed from the game");
-    } else {
-        response.send("They weren't part of the game");
-    }
-
-    response.end();
-});
-
-app.get('/Start/:gameId', function(request, response) {
-    var game = rummy.game(request.params.gameId);
-    var user = session.getUser(request, response);
-
-    if (!game) {
-        response.status(404);
-        response.send("Game not found");
-        response.end();
-        return;
-    }
-
-    var gameState = game.getContent();
-    if (user.id !== gameState.game.owner.id) {
-        response.status(403);
-        response.send("Only the owner can do this");
-        response.end();
-        return;
-    }
-    game.updateContent({
-        status: "dealing"
-    });
-
-    response.status(202);
-    response.send("Dealing...");
-    response.end();
-});
-
-http.createServer(app).listen(port, function () {
+var server = http.createServer(app).listen(port, function () {
     console.log("Express server listening on port " + port);
+});
+
+const io = require('socket.io')(server);
+const games = {};
+const users = {};
+
+io.on('connection', function(socket){
+  var id = uuidv4();
+  var session = {
+      id: id,
+      game: null,
+      player: new Player(id, null, null, socket),
+      joined: null
+  };
+  users[session.id] = session;
+  console.log('Connected: ' + session.id);
+
+  function sendGames() {
+    const data = {
+        games: Object.values(games)
+            .filter(game => game.status === 'waiting_for_players')
+            .map(game => game.getOverview())
+    };
+
+    io.emit('games', data);
+  }
+
+  socket.emit('user-id', session.id);
+  sendGames();
+  
+  const app = {
+      sendGames: () => { sendGames(); },
+      removeGame: (game) => {
+          delete games[game.id];
+          game.disconnect();
+      }
+  }
+
+  socket.on('new-game', function() {
+    if (session.game) {
+        session.player.administerGame(session.game, session.game.abandon);
+        delete games[session.game.id];
+    }
+
+    const minPlayers = 2;
+    const maxPlayers = 6;
+    const cardsPerPlayer = 7;
+    session.game = new Game(app, uuidv4(), io, session.player, minPlayers, maxPlayers, cardsPerPlayer);
+    games[session.game.id] = session.game;
+    console.log('Game created: ' + session.game.id);
+
+    socket.emit('new-game', {
+        game: session.game.getOverview(),
+        userId: session.id
+    });
+    sendGames();
+  });
+
+  socket.on('name', function(name) {
+    session.player.setName(name);
+    console.log(`${session.id} -> ${session.player.name}`);
+  });
+
+  socket.on('join', function(gameId) {
+    if (session.joined) {
+        socket.leave(session.joined);
+    }
+
+    const game = games[gameId];
+    socket.join(gameId);
+    session.joined = gameId;
+    game.join(session.player);
+  });
+
+  socket.on('disconnect', function(){
+    delete users[session.id];
+
+    Object.values(games)
+    .forEach(game => {
+        game.playerDisconnected(session.player);
+        if (game.owner.id === session.player.id) {
+            delete games[game.id];
+        }
+    });
+
+    sendGames(null);
+    console.log(`Disconnected: ${session.id} (${session.player.name})`);
+  });
 });

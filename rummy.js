@@ -28,36 +28,6 @@ module.exports.mapGameStateToOverview = function mapGameStateToOverview(gameStat
     };
 }
 
-module.exports.games = function games() {
-    return fs.readdirSync('./games')
-    .filter(filename => filename.endsWith('.game'))
-    .map(filename => {
-        return {
-            filename: filename,
-            id: filename.replace(/\.game$/, ''),
-            getContent: function() {
-                return JSON.parse(fs.readFileSync('./games/' + filename));
-            },
-            updateContent: function(changes) {
-                var newState = Object.assign({}, this.getContent(), changes);
-
-                fs.writeFileSync('./games/' + filename, JSON.stringify(newState, null, 4));
-                return newState;
-            }
-        }
-    });
-}
-
-module.exports.game = function game(id) {
-    var games = this.games().filter(game => { 
-        return game.id === id;
-    });
-
-    return games.length === 1 
-        ? games[0]
-        : null;
-}
-
 module.exports.newGame = function newGame(user) {
     var id = uuidv4();
 
@@ -83,8 +53,5 @@ module.exports.newGame = function newGame(user) {
         lobby: [ ]
     }
 
-    var newStateJson = JSON.stringify(newState, null, 4);
-
-    fs.writeFileSync('./games/' + id + '.game', newStateJson);
     return newState;
 }

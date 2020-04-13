@@ -1,0 +1,120 @@
+body {
+    font-family: Arial;
+}
+
+button {
+    font-size: 15px;
+}
+
+.card {
+    line-height: 70px;
+    text-align: center;
+    background-color: #ffffff;
+    border: 4px solid #cccccc;
+    border-radius: 3px;
+    margin: 2px;
+    display: inline-block;
+    width: 50px;
+    font-size: 20px;
+}
+
+.clubs:before {
+    content: "♣";
+}
+
+.clubs {
+    color: #000000;
+}
+
+.spades:before {
+    content: "♠";
+}
+
+.spades {
+    color: #000000;
+}
+
+.diamonds:before {
+    content: "♦";
+}
+
+.diamonds {
+    color: #ff0000;
+}
+
+.hearts:before {
+    content: "♥";
+}
+
+.hearts {
+    color: #ff0000;
+}
+
+#game-players:before {
+    content: "Players: ";
+}
+
+#game-players > span {
+    padding: 6px 5px;
+    display: inline-block;
+}
+
+#game-players > span:before {
+    content: "😐";
+    font-size: 20px;
+    vertical-align: middle;
+}
+
+#game-players > span.current-player {
+    background: #88ff88;
+}
+
+#game-players > span.current-player:before {
+    content: "🤔";
+}
+
+.me {
+    font-weight: bold;
+}
+
+.me:after {
+    content: " (you)";
+}
+
+#decks {
+    padding-top: 5px;
+    margin-top: 5px;
+    border-top: 2px dotted #888888;
+}
+
+#face_up {
+    display: inline-block;
+}
+
+.new-card {
+    background-color: #ffff88;
+}
+
+.back {
+    background-color: #8888ff;
+}
+
+.pile{
+    box-shadow: #000088 2px 2px 2px;
+}
+
+.horizontal-alignment > div {
+    display: inline-block;
+}
+
+.center-align {
+    text-align: center;
+}
+
+.top-padding {
+    padding-top: 5px;
+}
+
+body.your-turn {
+    background-color: #88ff88;
+}

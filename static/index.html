@@ -1,5 +1,56 @@
 <html>
+    <head>
+      <link rel="stylesheet" type="text/css" href="/index.css" />
+    </head>
     <body>
-        <h3>Play a game of rummy!</h3>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+        <div id="profile">
+          <label>Your name: <input id="name" /></label><br />
+          <button id="close-profile">Next</button>
+        </div>
+
+        <div id="welcome" style="display: none;">
+          <div id="game-list">
+            <h3>Games:</h3>
+            <ol id="games"></ol>  
+            <button id="new-game">Start a new game</button>
+          </div>
+
+          <div id="lobby" style="display: none;">
+            <h3>Admit players?</h3>
+            <ol id="admit"></ol>
+          </div>
+        </div>
+
+        <div id="game" style='display: none;'>
+          <h3>Rummy</h3>
+          <div id="game-players"></div>
+          <div id="hand" class="center-align"></div>
+          <div id="decks" class="horizontal-alignment center-align">
+            <div class="center-align">
+              <div id="face_up"></div>
+              <div class=" top-padding">Discarded</div>
+            </div>
+            <div class="center-align">
+              <div id="face_down" class="card back pile">&nbsp;</div>
+              <div class=" top-padding">Deck</div>
+            </div>
+            <div>
+              <button id="win">Declare win</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="winner_review" style="display: none">
+          <div id="winner-prompt"></div>
+          <div id="winning-hand"></div>
+          <button id="agree-winner">Agree</button>
+          <button id="disagree-winner">Disagree</button>
+          <button id="try-again">Start a new game</button>
+        </div>
+
+        <script src="/index.js"></script>
     </body>
 </html>
