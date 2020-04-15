@@ -16,7 +16,7 @@ $(function () {
 
     $("#hand").sortable({
       update: function( event, ui ) {
-        session.manualCardOrder = Array.from(event.target.children).map(element => {
+        session.manualCardOrder = Array.from(event.currentTarget.children).map(element => {
           return getCardFromElement(element);
         });
       }
@@ -161,11 +161,11 @@ $(function () {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      const id = $(event.target).data('id');
+      const id = $(event.currentTarget).data('id');
 
       if (!id) {
         console.log('No game Id found on element');
-        console.log(event.target);
+        console.log(event.currentTarget);
         return;
       }
 
@@ -183,7 +183,7 @@ $(function () {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      const id = $(event.target).data('id');
+      const id = $(event.currentTarget).data('id');
 
       socket.emit('start', id);
     });
@@ -193,8 +193,7 @@ $(function () {
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      const playerId = $(event.target).data('player-id');
-      const gameId = $(event.target).data('game-id');
+      const playerId = $(event.currentTarget).data('player-id');
 
       socket.emit('admit', playerId);
     });
@@ -210,7 +209,9 @@ $(function () {
       } else if (notification.state === 'abandoned') {
         resetUi();
       } else if (notification.state === 'started') {
-        $("#game-players").html("").append(notification.players.map(player => `<span data-id='${player.id}' class='${player.id === session.id ? 'me' : ''}'>${player.name}</span>`));
+        $("#game-players")
+        .html("")
+        .append(notification.players.map(player => `<span data-id='${player.id}' class='${player.id === session.id ? 'me' : ''}'>${player.name}</span>`));
       } else if (notification.state === 'face-up-changed') {
         updateFaceUp(notification.faceUp);
       } else if (notification.state === 'change-player') {
@@ -423,7 +424,7 @@ $(function () {
             return;
         }
 
-        const card = $(event.target);
+        const card = $(event.currentTarget);
         card.removeClass("new-card");
 
         const cardData = getCardFromElement(card);
