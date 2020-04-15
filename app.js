@@ -3,18 +3,15 @@ var http = require('http');
 var app = express();
 var port = 8082;
 var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
 const { Player } = require('./Player.js');
 const { Game } = require('./Game.js');
 
-app.configure(function () {
-    app.set('port', port);
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
-    app.use(cookieParser());
-    app.use(app.router);
-    app.use(express.static('static'));
-});
+app.set('port', port);
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(express.static('static'));
 
 app.get('/Status', function(request, response) {
     response.statusCode = 200;
