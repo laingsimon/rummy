@@ -297,7 +297,8 @@ module.exports.Game = class Game {
     getOverview = () => {
         return {
             id: this.id,
-            players: this.noOfPlayers(),
+            playerCount: this.noOfPlayers(),
+            players: Object.values(this.players).map(player => player.getOverview()),
             state: this.state,
             owner: this.owner.getOverview()
         };

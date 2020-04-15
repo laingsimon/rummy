@@ -8,27 +8,30 @@
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-        <div id="profile">
-          <label>Your name: <input id="name" /></label><br />
+        <div id="profile" class="center-align">
+          <h3>Play Rummy online</h3>
+          <p>Please enter your details below</p>
+          <label>Name: <input id="name" /></label><br />
+          <br />
           <button id="close-profile">Next</button>
         </div>
 
         <div id="welcome" style="display: none;">
-          <div id="game-list">
-            <h3>Games:</h3>
-            <ol id="games"></ol>  
-            <button id="new-game">Start a new game</button>
+          <div id="game-list" class="center-align">
+            <h3>Play Rummy online</h3>
+            <p>Select a game below or <button id="new-game">Start a new game</button></p>
+              <h3>Games</h3>
+            <div id="games"></div>  
           </div>
 
-          <div id="lobby" style="display: none;">
+          <div id="lobby" class="center-align" style="display: none;">
             <h3>Admit players?</h3>
-            <ol id="admit"></ol>
+            <div id="admit"></div>
           </div>
         </div>
 
         <div id="game" style='display: none;'>
-          <h3>Rummy</h3>
-          <div id="game-players"></div>
+          <div id="game-players" class="center-align"></div>
           <ul id="hand" class="center-align"></ul>
           <div class="center-align">
             <label>

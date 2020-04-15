@@ -90,6 +90,10 @@ io.on('connection', function(socket){
     }
 
     const game = games[gameId];
+    if (!game) {
+      throw new Error('Cannot find game with id ' + gameId);
+    }
+
     socket.join(gameId);
     session.joined = gameId;
     game.join(session.player);

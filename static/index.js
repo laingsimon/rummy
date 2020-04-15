@@ -30,7 +30,6 @@ $(function () {
 
     function refreshGames() {
       $("#games").html("");
-      $("#new-game").toggle(!session.joined && !session.joining);
       $("#games").toggle(session.games.length > 0);
       if (session.games.length === 0) {
         return;
@@ -38,17 +37,50 @@ $(function () {
 
       session.games.forEach(game => {
         const displayId = game.id.substring(0, 5);
+        
+        
+        function playerItem(player) {
+          return `<li>${playerText(player)}</li>`;
+        }
+
+        function playerText(player) {
+          if (player.id === session.id) {
+            return `You`;
+          }
+
+          return player.name;
+        }
 
         if (session.joining === game.id) {
-          $("#games").append(`<li style='font-weight: bold;'>${displayId} (${game.owner.name}) - ${game.players} player/s</li>`);
+          $("#games").append(`<div style='font-weight: bold;'>
+            You've asked to be admitted to game ${displayId},<br />${game.owner.name} needs to admit you
+          </div>`);
         } else if (session.joined === game.id) {
           if (session.id === game.owner.id) {
-            $("#games").append(`<li style='font-weight: bold;'><button class='start' data-id='${game.id}'>Start ${displayId} (${game.owner.name}) - ${game.players} player/s</button></li>`);
+            $("#games").append(`<div style='font-weight: bold;'>
+              <button class='start' data-id='${game.id}'>
+                Start game <b>${displayId}</b> with players:
+                <ol>
+                  ${game.players.map(playerItem).join('')}
+                </ol>
+              </button>
+            </div>`);
           } else {
-            $("#games").append(`<li style='font-weight: bold;'>${displayId} (${game.owner.name}) - ${game.players} player/s</li>`);
+            $("#games").append(`<div style='font-weight: bold;'>
+              You've joined ${displayId} and are waiting to play against<br />
+              ${game.players.map(playerText).join(', ')}<br />
+              <br/>
+              ${game.owner.name} can start the game
+            </div>`);
           }
         } else {
-          $("#games").append(`<li><button class='join' data-id='${game.id}'>Join ${displayId} (${game.owner.name}) - ${game.players} player/s</button></li>`);
+          $("#games").append(`<div>
+          <button class='join' data-id='${game.id}'>Join <b>${displayId}</b>, players are:
+            <ol>
+              ${game.players.map(playerItem).join('')}
+            </ol>
+          </button>
+          </div>`);
         }
       });
     }
@@ -78,7 +110,11 @@ $(function () {
     socket.on('joiners', function(joiners) {
       $("#admit").html("");
       joiners.forEach(joiner => {
-        $("#admit").append(`<li><button class='admit' data-player-id='${joiner.id}' data-game-id='${joiner.gameId}'>Admit ${joiner.name}</button></li>`);
+        $("#admit").append(`<div>
+          <button class='admit' data-player-id='${joiner.id}' data-game-id='${joiner.gameId}'>
+            Admit <b>${joiner.name}</b> into your game
+          </button>
+          </div>`);
       });
       $("#lobby").toggle(joiners.length > 0);
     });
@@ -101,12 +137,18 @@ $(function () {
       socket.emit('new-game', {});
     });
 
-    $("#games").on("click", ".join", function(event) {
+    $("#games").on("click", "button.join", function(event) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
 
       const id = $(event.target).data('id');
+
+      if (!id) {
+        console.log('No game Id found on element');
+        console.log(event.target);
+        return;
+      }
 
       socket.emit('join', id);
       session.joining = id;
@@ -117,7 +159,7 @@ $(function () {
       refreshGames();
     });
 
-    $("#games").on("click", ".start", function(event) {
+    $("#games").on("click", "button.start", function(event) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -127,7 +169,7 @@ $(function () {
       socket.emit('start', id);
     });
 
-    $("#admit").on("click", ".admit", function(event) {
+    $("#admit").on("click", "button.admit", function(event) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
