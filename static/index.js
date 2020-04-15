@@ -6,14 +6,27 @@ $(function () {
     var session = {
       games: [],
       joined: null,
-      id: null
+      id: null,
+      manualCardOrder: [],
+      hand: null
     };
 
+    $("#hand").sortable({ axis: "x", containment: "parent", scroll: false });
+    $("#hand").disableSelection();
+
+    $("#hand").sortable({
+      update: function( event, ui ) {
+        session.manualCardOrder = Array.from(event.target.children).map(element => {
+          return getCardFromElement(element);
+        });
+      }
+    });
+    
     socket.on('connect', function() {
       if ($("#name").val()) {
         socket.emit('name', rememberedName);
       }
-    })
+    });
 
     function refreshGames() {
       $("#games").html("");
@@ -58,6 +71,8 @@ $(function () {
       session.joined = newGame.game.id;
       session.joining = null;
       session.id = newGame.userId;
+      session.manualCardOrder = [];
+      session.hand = null;
     });
 
     socket.on('joiners', function(joiners) {
@@ -71,6 +86,8 @@ $(function () {
     socket.on('joined', function(id) {
       session.joined = id;
       session.joining = null;
+      session.manualCardOrder = [];
+      session.hand = null;
       $("#games").html("You're in the game!");
     });
 
@@ -94,6 +111,8 @@ $(function () {
       socket.emit('join', id);
       session.joining = id;
       session.joined = null;
+      session.manualCardOrder = [];
+      session.hand = null;
 
       refreshGames();
     });
@@ -163,6 +182,8 @@ $(function () {
         session.joined = null;
         session.joining = null;
         session.potential_winner_id = null;
+        session.manualCardOrder = [];
+        session.hand = null;
       }
     });
 
@@ -197,7 +218,85 @@ $(function () {
     }
 
     function showHand(parent, hand) {
-        parent.html("");
+      const orderOrCards = getHandManualOrder(hand);
+
+      showCards(parent, orderOrCards);
+    }
+
+    function getCardFromElement(cardElement) {
+      const card = $(cardElement);
+      const suit = card[0].className.replace('new-card', '').replace('card', '').trim();
+      const cardData = {};
+      cardData[suit] = card.text();
+      
+      return cardData;
+    }
+
+    function showCards(parent, cardsInOrder) {
+      parent.html("");
+
+      cardsInOrder.forEach(card => {
+        const suit = Object.keys(card)[0];
+        const theCard = `<li class='card ${suit}${card.new ? ' new-card' : ''}'>${card[suit]}</li>`
+        parent.append(theCard);
+      });
+    }
+
+    function getHandManualOrder(hand) {
+      if (hand.length === 0) {
+        return [];
+      }
+
+      hand = hand.filter(card => true); //copy array
+      let orderOfCards = session.manualCardOrder.filter(card => true); //copy array
+      let orderedHand = [];
+      while (orderOfCards.length > 0) {
+        const nextCardToShow = orderOfCards.shift();
+        const nextCardIndex = findCardIndexInHand(hand, nextCardToShow);
+
+        if (nextCardIndex !== null && nextCardIndex !== -1) {
+          let nextCard = hand[nextCardIndex];
+          orderedHand.push(nextCard);
+          hand.splice(nextCardIndex, 1);
+        }
+      }
+
+      const remainingCardOrder = getHandAutoOrder(hand);
+      return orderedHand.concat(remainingCardOrder);
+    }
+
+    function findCardInHand(hand, cardToFind) {
+      const suitToFind = Object.keys(cardToFind)[0];
+
+      const cardInHand = hand.filter(card => {
+        return card[suitToFind] && card[suitToFind] == cardToFind[suitToFind];
+      });
+
+      return cardInHand.length === 1 
+        ? cardInHand[0] 
+        : null;
+    }
+
+    function findCardIndexInHand(hand, cardToFind) {
+      const cardInHand = findCardInHand(hand, cardToFind);
+
+      if (!cardInHand) {
+        return -1;
+      }
+
+      for (let index = 0; index < hand.length; index++) {
+        if (cardInHand === hand[index]) {
+          return index;
+        }
+      }
+
+      return null; //should never get here!
+    }
+
+    function getHandAutoOrder(hand) {
+        if (hand.length === 0) {
+          return [];
+        }
 
         const suits = {
             hearts: hand.filter(card => card.hearts),
@@ -234,18 +333,21 @@ $(function () {
             return valueX.localeCompare(valueY);
         }
   
+        let cardOrder = [];
         Object.keys(suits).forEach(suit => {
             const cardsInSuit = suits[suit];
             cardsInSuit.sort(cardSort);
   
             cardsInSuit.forEach(card => {
-              const theCard = `<div class='card ${suit}${card.new ? ' new-card' : ''}'>${card[suit]}</div>`
-              parent.append(theCard);
+              cardOrder.push(card);
             });
         });
+
+        return cardOrder;
     }
 
     socket.on('hand', function(hand) {
+      session.hand = hand;
       showHand($("#hand"), hand);
     });
 
@@ -273,10 +375,9 @@ $(function () {
         const card = $(event.target);
         card.removeClass("new-card");
 
-        const suit = card[0].className.replace('card ', '');
-        const cardData = {};
-        cardData[suit] = card.text();
-
+        const cardData = getCardFromElement(card);
+        session.manualCardOrder.splice(findCardIndexInHand(session.manualCardOrder, cardData), 1); //remove the card stored at the manual card order
+        
         socket.emit('return_card', {
             card: cardData,
             token: session.go_token

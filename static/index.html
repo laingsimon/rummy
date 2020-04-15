@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
     <head>
       <link rel="stylesheet" type="text/css" href="/index.css" />
@@ -5,6 +6,7 @@
     <body>
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
         <div id="profile">
           <label>Your name: <input id="name" /></label><br />
@@ -27,14 +29,14 @@
         <div id="game" style='display: none;'>
           <h3>Rummy</h3>
           <div id="game-players"></div>
-          <div id="hand" class="center-align"></div>
+          <ul id="hand" class="center-align"></ul>
           <div class="center-align">
             <label>
               <input type="checkbox" id="win" />
               Tick here to say you've won when you hand a card back 😁
             </label>
           </div>
-        <div id="decks" class="horizontal-alignment center-align">
+          <div id="decks" class="horizontal-alignment center-align">
             <div class="center-align">
               <div id="face_up"></div>
               <div class=" top-padding">Discarded</div>
