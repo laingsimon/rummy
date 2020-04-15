@@ -284,9 +284,9 @@ $(function () {
         session.go_token = null;
         card.remove();
         $("#hand .new-card").removeClass("new-card");
-    });
 
-    $("#win").click(function() {
-        socket.emit('win');
+        if ($("#win").prop('checked')) {
+          socket.emit('win');
+        }
     });
   });
