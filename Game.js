@@ -84,8 +84,6 @@ module.exports.Game = class Game {
     }
 
     notifyLobby = () => {
-        const game = this;
-
         this.owner.socket.emit('joiners', Object.values(this.lobby).map(player => { 
             return player.getOverview();
         }));
@@ -258,7 +256,6 @@ module.exports.Game = class Game {
     }
 
     disconnect = () => {
-        //this.socket.leave(this.id);
     }
 
     notifyPlayers = (state) => {
