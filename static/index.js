@@ -150,6 +150,12 @@ $(function () {
         $("#game").hide();
         $("#welcome").show();
         $("#winner_review").hide();
+        $("body").removeClass('your-turn');
+        session.joined = null;
+        session.joining = null;
+        session.potential_winner_id = null;
+        session.manualCardOrder = [];
+        session.hand = null;
       } else if (notification.state === 'started') {
         $("#game-players").html("").append(notification.players.map(player => `<span data-id='${player.id}' class='${player.id === session.id ? 'me' : ''}'>${player.name}</span>`));
       } else if (notification.state === 'face-up-changed') {
