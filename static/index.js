@@ -21,11 +21,30 @@ $(function () {
         });
       }
     });
+
+    function resetUi() {
+      if (!session.name) {
+        $("#profile").show();
+      } else {
+        $("#welcome").show();
+      }
+      
+      $("#game").hide();
+      $("#winner_review").hide();
+      $("body").removeClass('your-turn');
+      session.joined = null;
+      session.joining = null;
+      session.potential_winner_id = null;
+      session.manualCardOrder = [];
+      session.hand = null;
+    }
     
     socket.on('connect', function() {
       if ($("#name").val()) {
         socket.emit('name', rememberedName);
       }
+
+      resetUi();
     });
 
     function refreshGames() {
@@ -189,15 +208,7 @@ $(function () {
       if (notification.state === 'dealing') {
         $("#game-players").text("Dealing...");
       } else if (notification.state === 'abandoned') {
-        $("#game").hide();
-        $("#welcome").show();
-        $("#winner_review").hide();
-        $("body").removeClass('your-turn');
-        session.joined = null;
-        session.joining = null;
-        session.potential_winner_id = null;
-        session.manualCardOrder = [];
-        session.hand = null;
+        resetUi();
       } else if (notification.state === 'started') {
         $("#game-players").html("").append(notification.players.map(player => `<span data-id='${player.id}' class='${player.id === session.id ? 'me' : ''}'>${player.name}</span>`));
       } else if (notification.state === 'face-up-changed') {
@@ -223,15 +234,7 @@ $(function () {
       } else if (notification.state === 'won') {
         $("#winner-prompt").html(`${notification.player.name} has won with this hand`);
         showHand($("#winning-hand"), notification.hand);
-        $("body").removeClass('your-turn');
-        $("#agree-winner").hide();
-        $("#disagree-winner").hide();
-        $("#try-again").show();
-        session.joined = null;
-        session.joining = null;
-        session.potential_winner_id = null;
-        session.manualCardOrder = [];
-        session.hand = null;
+        resetUi();
       }
     });
 
