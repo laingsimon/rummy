@@ -6,6 +6,10 @@ button {
     font-size: 15px;
 }
 
+#hand {
+    padding-left: 0px;
+}
+
 .card {
     line-height: 70px;
     text-align: center;
@@ -117,4 +121,8 @@ button {
 
 body.your-turn {
     background-color: #88ff88;
+}
+
+body.white-background {
+    background-color: inherit;
 }

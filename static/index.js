@@ -22,13 +22,14 @@ $(function () {
       }
     });
 
-    function resetUi() {
-      if (!session.name) {
+    function resetUi(showName) {
+      if (!$("#name").val() || showName) {
         $("#profile").show();
       } else {
         $("#welcome").show();
       }
       
+      $("#try-again").hide();
       $("#game").hide();
       $("#winner_review").hide();
       $("body").removeClass('your-turn');
@@ -44,7 +45,7 @@ $(function () {
         socket.emit('name', rememberedName);
       }
 
-      resetUi();
+      resetUi(true);
     });
 
     function refreshGames() {
@@ -220,6 +221,8 @@ $(function () {
         });
 
         $("body").toggleClass('your-turn', notification.player.id === session.id);
+        $("#win").prop('checked', false);
+        $("#win").parent().toggle(notification.player.id === session.id)
         $("#game").show();
         $("#winner_review").hide();
         updateFaceUp(notification.faceUp);
@@ -232,27 +235,28 @@ $(function () {
           $("#try-again").hide();
           $("#game").hide();
           $("#winner_review").show();
+          $("body").addClass('white-background');
       } else if (notification.state === 'won') {
         $("#winner-prompt").html(`${notification.player.name} has won with this hand`);
         showHand($("#winning-hand"), notification.hand);
-        resetUi();
+        $("#try-again").show();
+        $("body").removeClass('your-turn');
       }
     });
 
     $("#try-again").click(function() {
-        $("#game").hide();
-        $("#welcome").show();
-        $("#winner_review").hide();
-        refreshGames();
+      resetUi();
     });
 
     $("#agree-winner").click(function() {
+        $("body").removeClass('white-background');
         $("#agree-winner").hide();
         $("#disagree-winner").hide();
         socket.emit('agree_winner', session.potential_winner_id);
     });
 
     $("#disagree-winner").click(function() {
+        $("body").removeClass('white-background');
         $("#game").show();
         $("#winner_review").hide();
   })
