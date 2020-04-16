@@ -16,7 +16,7 @@ $(function () {
 
     $("#hand").sortable({
       update: function( event, ui ) {
-        session.manualCardOrder = Array.from(event.currentTarget.children).map(element => {
+        session.manualCardOrder = Array.from(event.target.children).map(element => {
           return getCardFromElement(element);
         });
       }
