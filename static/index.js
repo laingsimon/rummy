@@ -25,8 +25,10 @@ $(function () {
     function resetUi(showName) {
       if (!$("#name").val() || showName) {
         $("#profile").show();
+        $("#welcome").hide();
       } else {
         $("#welcome").show();
+        $("#profile").hide();
       }
       
       $("#try-again").hide();
