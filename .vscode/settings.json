@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/3da22143-6475-4738-a0c7-7fa773e393dc/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/rummy-remote",
+    "appService.deploySubpath": ""
+}
