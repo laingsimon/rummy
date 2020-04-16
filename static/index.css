@@ -1,4 +1,4 @@
-body {
+body, body.white-background {
     font-family: Arial;
     background: #bbbbbb;
 }
@@ -122,10 +122,6 @@ button {
 
 body.your-turn {
     background-color: #88ff88;
-}
-
-body.white-background {
-    background-color: inherit;
 }
 
 span.suit {
