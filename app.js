@@ -1,7 +1,7 @@
 var express = require('express');
 var http = require('http');
 var app = express();
-var port = 8082;
+var port = 8080;
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
