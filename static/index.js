@@ -11,9 +11,12 @@ $(function () {
       hand: null
     };
 
-    window.addEventListener('beforeunload', function(ev) {
+    window.addEventListener('beforeunload', function(e) {
+      e.preventDefault();
+      delete e['returnValue'];
+
       if (session.joined) {
-        return 'You are part of a game, reloading the page will abandon the game for everyone.';
+        e.returnValue = 'You are part of a game, reloading the page will abandon the game for everyone.';
       }
     });
 
