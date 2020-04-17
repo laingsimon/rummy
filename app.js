@@ -73,8 +73,7 @@ io.on('connection', function(socket){
     console.log('Game created: ' + session.game.id);
 
     socket.emit('new-game', {
-        game: session.game.getOverview(),
-        userId: session.id
+        game: session.game.getOverview()
     });
     sendGames();
   });

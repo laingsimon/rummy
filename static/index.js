@@ -135,7 +135,6 @@ $(function () {
     socket.on('new-game', function(newGame) {
       session.joined = newGame.game.id;
       session.joining = null;
-      session.id = newGame.userId;
       session.manualCardOrder = [];
       session.hand = null;
     });
