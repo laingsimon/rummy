@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
 const { Player } = require('./Player.js');
 const { Game } = require('./Game.js');
+const colors = require('colors');
 
 app.set('port', port);
 app.use(bodyParser.json());
@@ -28,15 +29,14 @@ const games = {};
 const users = {};
 
 io.on('connection', function(socket){
-  var id = uuidv4();
   var session = {
-      id: id,
+      id: socket.id,
       game: null,
-      player: new Player(id, null, null, socket),
+      player: new Player(socket.id, null, null, socket),
       joined: null
   };
   users[session.id] = session;
-  console.log('Connected: ' + session.id);
+  console.log(`Connected: ${session.id}`.cyan);
 
   function sendGames() {
     const data = {
@@ -48,7 +48,6 @@ io.on('connection', function(socket){
     io.emit('games', data);
   }
 
-  socket.emit('user-id', session.id);
   sendGames();
   
   const app = {
@@ -70,7 +69,7 @@ io.on('connection', function(socket){
     const cardsPerPlayer = 7;
     session.game = new Game(app, uuidv4(), io, session.player, minPlayers, maxPlayers, cardsPerPlayer);
     games[session.game.id] = session.game;
-    console.log('Game created: ' + session.game.id);
+    console.log(`Game created: ${session.game.id}`);
 
     socket.emit('new-game', {
         game: session.game.getOverview()
@@ -80,7 +79,7 @@ io.on('connection', function(socket){
 
   socket.on('name', function(name) {
     session.player.setName(name);
-    console.log(`${session.id} -> ${session.player.name}`);
+    console.log(`${session.id} -> ${session.player.name}`.cyan);
   });
 
   socket.on('join', function(gameId) {
@@ -110,6 +109,6 @@ io.on('connection', function(socket){
     });
 
     sendGames(null);
-    console.log(`Disconnected: ${session.id} (${session.player.name})`);
+    console.log(`Disconnected: ${session.id} (${session.player.name})`.red);
   });
 });

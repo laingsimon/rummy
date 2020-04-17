@@ -58,6 +58,8 @@ $(function () {
         socket.emit('name', rememberedName);
       }
 
+      session.id = socket.id;
+      console.log(session.id);
       resetUi(true);
     });
 
@@ -121,10 +123,6 @@ $(function () {
     $("#close-profile").click(function() {
         $("#profile").hide();
         $("#welcome").show();
-    });
-
-    socket.on('user-id', function(id) {
-      session.id = id;
     });
 
     socket.on('games', function(games) {
