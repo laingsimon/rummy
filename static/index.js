@@ -11,7 +11,13 @@ $(function () {
       hand: null
     };
 
-    $("#hand").sortable({ axis: "x", containment: "parent", scroll: false });
+    window.addEventListener('beforeunload', function(ev) {
+      if (session.joined) {
+        return 'You are part of a game, reloading the page will abandon the game for everyone.';
+      }
+    });
+
+    $("#hand").sortable({ axis: "x", containment: "parent", scroll: false, delay: 500 });
     $("#hand").disableSelection();
 
     $("#hand").sortable({
