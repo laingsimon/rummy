@@ -44,6 +44,8 @@ $(function () {
       $("#game").hide();
       $("#winner_review").hide();
       $("body").removeClass('your-turn');
+      $("#other-hands").html("");
+      $("#full-disclosure").hide();
       session.joined = null;
       session.joining = null;
       session.potential_winner_id = null;
@@ -249,9 +251,26 @@ $(function () {
           $("body").addClass('white-background');
       } else if (notification.state === 'won') {
         $("#winner-prompt").html(`${notification.player.name} has won with this hand`);
-        showHand($("#winning-hand"), notification.hand);
+        let winningHand = notification.hands[notification.player.id];
+
+        showHand($("#winning-hand"), winningHand.hand);
         $("#try-again").show();
         $("body").removeClass('your-turn');
+        $("#other-hands").html("");
+
+        Object.keys(notification.hands)
+          .filter(id => id !== notification.player.id)
+          .forEach(id => {
+            const player = notification.hands[id];
+            const name = player.id === session.id 
+              ? 'You'
+              : player.name;
+
+            $("#other-hands").append(`<div data-player-id='${player.id}'><div class='name'>${name}</div><div class='hand'></div></div>`);
+            showHand($(`#other-hands > div[data-player-id='${player.id}'] > div.hand`), player.hand);
+          });
+
+          $("#full-disclosure").show();
       }
     });
 

@@ -118,7 +118,7 @@ module.exports.Game = class Game {
 
         const player = this.lobby[playerId];
         if (!player) {
-            this.error(this.owner.socket, 'Player not in the lobby');
+            this.error(this.owner.socket, `Player ${playerId} not in the lobby, lobby contains: ${JSON.stringify(Object.keys(this.lobby))}`);
             return;
         }
 
@@ -239,18 +239,25 @@ module.exports.Game = class Game {
             const winner = this.players[winner_id];
 
             if (!winner) {
-                throw new Error('Cannot find winner with id ' + winner_id + '\nPlayers: ' + JSON.stringify(Object.keys(this.players)));
+                this.error(player.socket, 'Cannot find winner with id ' + winner_id + '\nPlayers: ' + JSON.stringify(Object.keys(this.players)));
+                return;
             }
 
-            const winningHand = winner.getHand();
+            this.state = 'won';
+            let game = this;
+
+            let hands = {};
+            Object.values(this.players).forEach(player => {
+                hands[player.id] = player.getOverview();
+                hands[player.id].hand = player.getHand(game);
+            });
 
             this.notifyPlayers({
                 state: 'won',
                 player: winner.getOverview(),
-                hand: winningHand
+                hands: hands
             })
 
-            this.state = 'won';
             this.app.removeGame(this);
         }
     }

@@ -5,7 +5,6 @@ module.exports.Player = class Player {
         this.hand = hand;
         this.socket = socket;
         this.adminToken =  {};
-        this.won = false;
     }
 
     administerGame = (game, func) => {
@@ -17,7 +16,6 @@ module.exports.Player = class Player {
     }
 
     yourTurn = (game, token) => {
-        this.won = false;
         this.socket.emit('your-turn', token);
     }
 
@@ -28,7 +26,6 @@ module.exports.Player = class Player {
     notifyInGame = (game) => {
         let socket = this.socket;
         let me = this;
-        let setWon = (function(value) { this.won = value }).bind(this);
         socket.join(game.id);
         socket.emit('joined', game.id);
         
@@ -80,7 +77,6 @@ module.exports.Player = class Player {
 
         this.socket.on('win', function() {
             game.notifyWinner(me, me.hand);
-            setWon(true);
         });
 
         this.socket.on('agree_winner', function(winner_id) {
@@ -88,12 +84,12 @@ module.exports.Player = class Player {
         })
     }
 
-    getHand = () => {
-        if (!this.won) {
-            throw new Error('You cannot see my hand until i have won!');
+    getHand = (game) => {
+        if (game.state === 'abandoned' || game.state === 'won') {
+            return this.hand;            
         }
 
-        return this.hand;
+        throw new Error('You cannot see my hand until the game has been won or abandoned');
     }
 
     setHand = (hand) => {
