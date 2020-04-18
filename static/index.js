@@ -72,7 +72,6 @@ $(function () {
       }
 
       session.id = socket.id;
-      console.log(session.id);
       resetUi(true);
     });
 
@@ -188,8 +187,6 @@ $(function () {
       const id = $(event.currentTarget).data('id');
 
       if (!id) {
-        console.log('No game Id found on element');
-        console.log(event.currentTarget);
         return;
       }
 
@@ -534,9 +531,7 @@ $(function () {
       session.hand = hand;
       showHand($("#hand"), hand);
 
-      console.log('hand');
       if (session.callAfterHandUpdate) {
-        console.log('now');
         const callback = session.callAfterHandUpdate;
         session.callAfterHandUpdate = null;
         callback();
