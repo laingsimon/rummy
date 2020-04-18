@@ -59,6 +59,7 @@ $(function () {
       $("body").removeClass('your-turn');
       $("#other-hands").html("");
       $("#full-disclosure").hide();
+      clearFaceUp();
       session.joined = null;
       session.joining = null;
       session.potential_winner_id = null;
@@ -257,8 +258,6 @@ $(function () {
         });
 
         $("body").toggleClass('your-turn', notification.player.id === session.id);
-        $("#win").prop('checked', false);
-        $("#win").parent().toggle(notification.player.id === session.id)
         $("#game").show();
         $("#winner_review").hide();
         if (notification.previousPlayer && notification.previousPlayer.id === session.id) {
@@ -571,10 +570,21 @@ $(function () {
             token: session.go_token
         });
         session.go_token = null;
-        
-        if ($("#win").prop('checked')) {
+
+        if (session.won) {
           socket.emit('win');
         }
+        session.won = false;
         });
+      });
+
+      $("#i-have-won").click(function() {
+        if (session.hand.length !== 7) {
+          session.won = true;
+          alert("Great!\nPut a card back and everyone else can confirm you're the winner");
+          return;
+        }
+
+        socket.emit('win');
       });
   });
