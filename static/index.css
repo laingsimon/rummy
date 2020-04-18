@@ -21,6 +21,12 @@ button {
     display: inline-block;
     width: 50px;
     font-size: 20px;
+    min-height: 70px;
+}
+
+#face_up {
+    min-height: 70px;
+    min-width: 50px;
 }
 
 .clubs:before {

@@ -31,6 +31,19 @@ $(function () {
       }
     });
 
+    function cardElement(card, newCard) {
+      const suit = Object.keys(card)[0];
+      return $(`<div class='card ${suit}${newCard ? ' new-card' : ''}'>${card[suit]}</div>`);
+    }
+
+    function faceDownCard() {
+      return $("<div class='card back' style='position: absolute'></div>");      
+    }
+
+    function clearFaceUp() {
+      $("#face_up").html("");
+    }
+    
     function resetUi(showName) {
       if (!$("#name").val() || showName) {
         $("#profile").show();
@@ -223,8 +236,24 @@ $(function () {
         $("#game-players")
         .html("")
         .append(notification.players.map(player => `<span data-id='${player.id}' class='${player.id === session.id ? 'me' : ''}'>${player.name}</span>`));
-      } else if (notification.state === 'face-up-changed') {
-        updateFaceUp(notification.faceUp);
+      } else if (notification.state === 'card-taken-from-face-up') {
+        if (notification.player.id !== session.id) {
+          animateCardFromFaceUpToPlayer(notification.removedFromFaceUp, notification.faceUp, notification.player, () => {
+            updateFaceUp(notification.faceUp);
+          });
+        } else {
+          session.callAfterHandUpdate = function() {
+            animateCardFromFaceUpToHand(notification.removedFromFaceUp, notification.faceUp, () => {
+              updateFaceUp(notification.faceUp);
+            });  
+          }
+        }
+      } else if (notification.state === 'card-taken-returned-face-up') {
+        if (notification.player.id !== session.id) {
+          animateCardReturnedFaceUp(notification.card, notification.player, () => {
+            updateFaceUp(notification.faceUp);
+          });
+        }
       } else if (notification.state === 'change-player') {
         $("#game-players span").each(function() { 
           $(this).toggleClass('current-player', $(this).data('id') === notification.player.id);
@@ -235,7 +264,17 @@ $(function () {
         $("#win").parent().toggle(notification.player.id === session.id)
         $("#game").show();
         $("#winner_review").hide();
-        updateFaceUp(notification.faceUp);
+        if (notification.previousPlayer && notification.previousPlayer.id === session.id) {
+          updateFaceUp(notification.faceUp);
+        }
+      } else if (notification.state === 'card-taken-from-deck') {
+        if (notification.player.id !== session.id) {
+          animateCardFromDeckToPlayer(notification.player);
+        } else {
+          session.callAfterHandUpdate = function() {
+            animateCardFromDeckToHand();
+          }
+        }
       } else if (notification.state === 'potential_winner') {
           session.potential_winner_id = notification.player.id
           $("#winner-prompt").html(`${notification.player.name} thinks they have won with this hand, do you agree?`);
@@ -286,18 +325,82 @@ $(function () {
         $("body").removeClass('white-background');
         $("#game").show();
         $("#winner_review").hide();
-  })
+  });
+
+  function animateCardFromDeckToHand() {
+    const deck = $("#face_down");
+
+    animateCard(deck, $("#hand .new-card"), faceDownCard());
+  }
+
+  function animateCardFromDeckToPlayer(player) {
+    if (player === null) {
+      return;
+    }
+
+    const deck = $("#face_down");
+
+    let playerTab = $(`#game-players > span[data-id='${player.id}']`);
+    animateCard(deck, playerTab, faceDownCard());
+  }
 
     function updateFaceUp(faceUp) {
-        $("#face_up").html("");
-        if (faceUp.length > 0) {
-          const lastFaceUpCard = faceUp[0];
-          const suit = Object.keys(lastFaceUpCard)[0];
-          const theCard = `<div class='card ${suit}'>${lastFaceUpCard[suit]}</div>`
-          $("#face_up").append(theCard).show();
-        } else {
-          $("#face_up").hide();
-        }
+      clearFaceUp();
+      if (faceUp.length > 0) {
+        const lastFaceUpCard = faceUp[0];
+
+        $("#face_up").append(cardElement(lastFaceUpCard)).show();
+      }
+    }
+
+    function animateCardFromFaceUpToHand(card, faceUp, callback) {
+      let toElement = $(`#hand .new-card`);
+
+      clearFaceUp();
+      if (faceUp.length > 0) {
+        $("#face_up").append(cardElement(faceUp[0]));
+      }
+
+      animateCard($("#face_up"), toElement, cardElement(card), callback);
+    }
+
+    function animateCardFromFaceUpToPlayer(card, faceUp, player, callback) {
+      let playerTab = $(`#game-players > span[data-id='${player.id}']`);
+
+      clearFaceUp();
+      if (faceUp.length > 0) {
+        $("#face_up").append(cardElement(faceUp[0]));
+      }
+
+      animateCard($("#face_up"), playerTab, cardElement(card), callback);
+    }
+
+    function animateCardReturnedFaceUp(card, player, callback) {
+      let playerTab = $(`#game-players > span[data-id='${player.id}']`);
+
+      animateCard(playerTab, $("#face_up"), cardElement(card), callback);
+    }
+
+    function animateCard(fromElement, toElement, card, callback) {
+      card.css({
+        top: fromElement.position().top + "px",
+        left: fromElement.position().left + "px",
+        position: 'absolute'
+      });
+
+      card.appendTo($("body")).animate(
+        {
+          top: toElement.position().top + "px",
+          left: toElement.position().left + "px",
+        },
+        250,
+        "",
+        () => {
+          card.remove();
+          if (callback) {
+            callback();
+          }
+        });
     }
 
     function showHand(parent, hand) {
@@ -319,9 +422,7 @@ $(function () {
       parent.html("");
 
       cardsInOrder.forEach(card => {
-        const suit = Object.keys(card)[0];
-        const theCard = `<li class='card ${suit}${card.new ? ' new-card' : ''}'>${card[suit]}</li>`
-        parent.append(theCard);
+        parent.append(cardElement(card, card.new));
       });
     }
 
@@ -330,8 +431,8 @@ $(function () {
         return [];
       }
 
-      hand = hand.filter(card => true); //copy array
-      let orderOfCards = session.manualCardOrder.filter(card => true); //copy array
+      hand = hand.filter(() => true); //copy array
+      let orderOfCards = session.manualCardOrder.filter(() => true); //copy array
       let orderedHand = [];
       while (orderOfCards.length > 0) {
         const nextCardToShow = orderOfCards.shift();
@@ -432,6 +533,14 @@ $(function () {
     socket.on('hand', function(hand) {
       session.hand = hand;
       showHand($("#hand"), hand);
+
+      console.log('hand');
+      if (session.callAfterHandUpdate) {
+        console.log('now');
+        const callback = session.callAfterHandUpdate;
+        session.callAfterHandUpdate = null;
+        callback();
+      }
     });
 
     socket.on('game_error', function(message) {
@@ -456,21 +565,21 @@ $(function () {
         }
 
         const card = $(event.currentTarget);
-        card.removeClass("new-card");
+        $("#hand .new-card").removeClass("new-card");
 
         const cardData = getCardFromElement(card);
         session.manualCardOrder.splice(findCardIndexInHand(session.manualCardOrder, cardData), 1); //remove the card stored at the manual card order
-        
-        socket.emit('return_card', {
+
+        animateCard(card, $("#face_up"), card, () => {
+          socket.emit('return_card', {
             card: cardData,
             token: session.go_token
         });
         session.go_token = null;
-        card.remove();
-        $("#hand .new-card").removeClass("new-card");
-
+        
         if ($("#win").prop('checked')) {
           socket.emit('win');
         }
-    });
+        });
+      });
   });

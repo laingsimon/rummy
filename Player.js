@@ -35,7 +35,7 @@ module.exports.Player = class Player {
                 return;
             }
 
-            const card = game.takeCardFromFaceUp();
+            const card = game.takeCardFromFaceUp(me);
             me.hand = me.hand.concat([ card ]);
             card.new = true;
             socket.emit('hand', me.hand);
@@ -46,7 +46,7 @@ module.exports.Player = class Player {
                 return;
             }
 
-            const card = game.takeCardFromDeck();
+            const card = game.takeCardFromDeck(me);
             me.hand = me.hand.concat([ card ]);
             card.new = true;
             socket.emit('hand', me.hand);
@@ -69,7 +69,7 @@ module.exports.Player = class Player {
                 return card[returnSuit] != returnValue;
             });
 
-            game.returnCardFaceUp(data.card);
+            game.returnCardFaceUp(data.card, me);
             me.hand.forEach(card => delete card.new);
             socket.emit('hand', me.hand);
             game.moveToNextPlayer();

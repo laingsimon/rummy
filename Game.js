@@ -181,30 +181,38 @@ module.exports.Game = class Game {
         this.moveToNextPlayer();
     }
 
-    takeCardFromDeck = () => {
+    takeCardFromDeck = (player) => {
         if (this.face_down.length === 0) {
             this.face_down = this.face_up;
             this.face_up = [];
         }
 
-        return this.face_down.shift();
-    }
-
-    takeCardFromFaceUp = () => {
-        const card = this.face_up.shift();
+        const card = this.face_down.shift();
         this.notifyPlayers({
-            state: 'face-up-changed',
-            faceUp: this.face_up,
-            removedFromFaceUp: card
+            state: 'card-taken-from-deck',
+            player: player.getOverview()
         });
         return card;
     }
 
-    returnCardFaceUp = (card) => {
+    takeCardFromFaceUp = (player) => {
+        const card = this.face_up.shift();
+        this.notifyPlayers({
+            state: 'card-taken-from-face-up',
+            faceUp: this.face_up,
+            removedFromFaceUp: card,
+            player: player.getOverview()
+        });
+        return card;
+    }
+
+    returnCardFaceUp = (card, player) => {
         this.face_up.unshift(card);
         this.notifyPlayers({
-            state: 'face-up-changed',
-            faceUp: this.face_up
+            state: 'card-taken-returned-face-up',
+            faceUp: this.face_up,
+            player: player.getOverview(),
+            card: card
         });
     }
 
@@ -270,6 +278,8 @@ module.exports.Game = class Game {
     }
 
     moveToNextPlayer = () => {
+        const previousPlayer = this.getCurrentPlayer();
+
         this.currentPlayer++;
         if (this.currentPlayer >= this.playerSequence.length) {
             this.currentPlayer = 0;
@@ -280,7 +290,8 @@ module.exports.Game = class Game {
         this.notifyPlayers({
             state: 'change-player',
             player: this.getCurrentPlayer().getOverview(),
-            faceUp: this.face_up
+            faceUp: this.face_up,
+            previousPlayer: previousPlayer ? previousPlayer.getOverview() : null
         })
     }
 
