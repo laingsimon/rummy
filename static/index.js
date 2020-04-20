@@ -20,7 +20,42 @@ $(function () {
       }
     });
 
-    $("#hand").sortable({ axis: "x", containment: "parent", scroll: false, delay: 500 });
+    let lastDragStart = {
+      element: null,
+      when: null
+    };
+
+    $("#hand").sortable({ 
+      axis: "x", 
+      containment: "parent", 
+      scroll: false, 
+      delay: 300,
+      start: function(event, ui) {
+        const card = ui.item[0];
+        const now = new Date();
+        const then = lastDragStart.when;
+        lastDragStart.when = now;
+
+        if (!card || !$(card).hasClass("card")) {
+          lastDragStart.element = null;
+          return;
+        }
+
+        if (card !== lastDragStart.element) {
+          lastDragStart.element = card;
+          return;
+        }
+
+        const timeDiff = now - then;
+        if (timeDiff > 500) {
+          if (confirm('Do you want to hand this card back?')) {
+            $(card).click();
+          } else {
+            lastDragStart.element = null;
+          }          
+        }
+      } 
+    });
     $("#hand").disableSelection();
 
     $("#hand").sortable({
