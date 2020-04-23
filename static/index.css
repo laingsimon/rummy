@@ -22,11 +22,17 @@ button {
     width: 50px;
     font-size: 20px;
     min-height: 70px;
+    cursor: pointer;
 }
 
 #face_up {
     min-height: 70px;
     min-width: 50px;
+    display: inline-block;
+}
+
+#face_up:empty {
+    border: 4px dotted #cccccc;
 }
 
 .clubs:before {
@@ -98,10 +104,6 @@ button {
     border-top: 2px dotted #888888;
 }
 
-#face_up {
-    display: inline-block;
-}
-
 .new-card {
     background-color: #ffff88;
 }
@@ -150,4 +152,13 @@ span.suit.red {
 #other-hands div.name {
     border-top: 1px solid #000000;
     margin-top: 5px;
+}
+
+
+.ui-draggable-dragging {
+    display: inline-block;
+}
+
+.ui-sortable-placeholder {
+   display: none;
 }

@@ -8,7 +8,9 @@ $(function () {
       joined: null,
       id: null,
       manualCardOrder: [],
-      hand: null
+      hand: null,
+      faceUp: [],
+      nextCardIndex: null
     };
 
     window.addEventListener('beforeunload', function(e) {
@@ -20,56 +22,26 @@ $(function () {
       }
     });
 
-    let lastDragStart = {
-      element: null,
-      when: null
-    };
-
     $("#hand").sortable({ 
       scroll: false, 
-      start: function(event, ui) {
-        const card = ui.item[0];
-        const now = new Date();
-        const then = lastDragStart.when;
-        lastDragStart.when = now;
-
-        if (!card || !$(card).hasClass("card")) {
-          lastDragStart.element = null;
-          return;
+      beforeStop: function(event, ui) {
+        if (ui.helper.hasClass('back') || ui.helper[0].id === 'face_down') {
+          socket.emit('take_face_down', session.go_token);
+          session.nextCardIndex = Array.from($("#hand")[0].children).indexOf(ui.helper[0]);
+        } else {
+          socket.emit('take_face_up', session.go_token);
+          session.nextCardIndex = Array.from($("#hand")[0].children).indexOf(ui.helper[0]);
         }
-
-        if (card !== lastDragStart.element) {
-          lastDragStart.element = card;
-          return;
-        }
-
-        const timeDiff = now - then;
-        if (timeDiff > 500) {
-          if (confirm('Do you want to hand this card back?')) {
-            $(card).click();
-          } else {
-            lastDragStart.element = null;
-          }          
-        }
+        disableDragging();
       },
       update: function( event, ui ) {
-        session.manualCardOrder = Array.from(event.target.children).map(element => {
+        session.manualCardOrder = Array.from(event.target.children).filter(element => !$(element).hasClass('back')).map(element => {
           return getCardFromElement(element);
         });
       } 
     });
 
     $("#hand").disableSelection();
-
-    $("#hand").droppable({
-      drop: function(event, ui) {
-        if (ui.draggable[0].id === 'face_down') {
-          socket.emit('take_face_down', session.go_token);
-        } else {
-          socket.emit('take_face_up', session.go_token);
-        }
-      }
-    });
 
     $("#face_up").droppable({
       accept: '.card',
@@ -98,16 +70,23 @@ $(function () {
     });
 
     $("#face_down").draggable({
-      helper: "clone"/*,
-      connectToSortable: "#hand"*/
+      helper: "clone",
+      connectToSortable: "#hand"
     });
 
     $("#face_up").draggable({
       helper: "clone",
-      start: function(event, ui) {
-        //console.log(event);
-      }/*,
-      connectToSortable: "#hand"*/
+      connectToSortable: "#hand",
+      /*helper: function(){
+        const helper = $("#face_up")[0].innerHTML;
+        tentativeFaceUp = session.faceUp.concat([]);
+        tentativeFaceUp.shift();
+        updateFaceUp(tentativeFaceUp);
+        return $(helper);
+      },*/
+      stop: function(event, ui) {
+        displayFaceUp(session.faceUp);
+      }
     });
 
     function disableDragging() {
@@ -329,12 +308,8 @@ $(function () {
           animateCardFromFaceUpToPlayer(notification.removedFromFaceUp, notification.faceUp, notification.player, () => {
             updateFaceUp(notification.faceUp);
           });
-        } else {
-          session.callAfterHandUpdate = function() {
-            animateCardFromFaceUpToHand(notification.removedFromFaceUp, notification.faceUp, () => {
-              updateFaceUp(notification.faceUp);
-            });  
-          }
+        }else {
+          updateFaceUp(notification.faceUp);
         }
       } else if (notification.state === 'card-taken-returned-face-up') {
         if (notification.player.id !== session.id) {
@@ -361,10 +336,6 @@ $(function () {
       } else if (notification.state === 'card-taken-from-deck') {
         if (notification.player.id !== session.id) {
           animateCardFromDeckToPlayer(notification.player);
-        } else {
-          session.callAfterHandUpdate = function() {
-            animateCardFromDeckToHand();
-          }
         }
       } else if (notification.state === 'potential_winner') {
           session.potential_winner_id = notification.player.id
@@ -438,23 +409,17 @@ $(function () {
   }
 
     function updateFaceUp(faceUp) {
+      session.faceUp = faceUp;
+      displayFaceUp(faceUp);
+    }
+
+    function displayFaceUp(faceUp) {
       clearFaceUp();
       if (faceUp.length > 0) {
         const lastFaceUpCard = faceUp[0];
 
         $("#face_up").append(cardElement(lastFaceUpCard)).show();
       }
-    }
-
-    function animateCardFromFaceUpToHand(card, faceUp, callback) {
-      let toElement = $(`#hand .new-card`);
-
-      clearFaceUp();
-      if (faceUp.length > 0) {
-        $("#face_up").append(cardElement(faceUp[0]));
-      }
-
-      animateCard($("#face_up"), toElement, cardElement(card), callback);
     }
 
     function animateCardFromFaceUpToPlayer(card, faceUp, player, callback) {
@@ -497,6 +462,14 @@ $(function () {
     }
 
     function showHand(parent, hand) {
+      if (session.nextCardIndex !== null) {
+        var newCard = Array.from(hand).filter(card => card.new === true)[0];
+        if (newCard) {
+          session.manualCardOrder.splice(session.nextCardIndex, 0, newCard);
+        }
+        session.nextCardIndex = null;        
+      }
+
       const orderOrCards = getHandManualOrder(hand);
 
       showCards(parent, orderOrCards);
@@ -626,12 +599,6 @@ $(function () {
     socket.on('hand', function(hand) {
       session.hand = hand;
       showHand($("#hand"), hand);
-
-      if (session.callAfterHandUpdate) {
-        const callback = session.callAfterHandUpdate;
-        session.callAfterHandUpdate = null;
-        callback();
-      }
     });
 
     socket.on('game_error', function(message) {
