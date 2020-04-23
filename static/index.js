@@ -26,10 +26,7 @@ $(function () {
     };
 
     $("#hand").sortable({ 
-      axis: "x", 
-      containment: "parent", 
       scroll: false, 
-      delay: 300,
       start: function(event, ui) {
         const card = ui.item[0];
         const now = new Date();
@@ -54,21 +51,78 @@ $(function () {
             lastDragStart.element = null;
           }          
         }
-      } 
-    });
-    $("#hand").disableSelection();
-
-    $("#hand").sortable({
+      },
       update: function( event, ui ) {
         session.manualCardOrder = Array.from(event.target.children).map(element => {
           return getCardFromElement(element);
         });
+      } 
+    });
+
+    $("#hand").disableSelection();
+
+    $("#hand").droppable({
+      drop: function(event, ui) {
+        if (ui.draggable[0].id === 'face_down') {
+          socket.emit('take_face_down', session.go_token);
+        } else {
+          socket.emit('take_face_up', session.go_token);
+        }
       }
     });
 
+    $("#face_up").droppable({
+      accept: '.card',
+      drop: function(event, ui) {
+        if (!session.go_token || $("#hand .new-card").length === 0) {
+            return;
+        }
+
+        const card = ui.draggable;
+        $("#hand .new-card").removeClass("new-card");
+
+        const cardData = getCardFromElement(card);
+        session.manualCardOrder.splice(findCardIndexInHand(session.manualCardOrder, cardData), 1); //remove the card stored at the manual card order
+
+        socket.emit('return_card', {
+            card: cardData,
+            token: session.go_token
+        });
+        session.go_token = null;
+
+        if (session.won) {
+          socket.emit('win');
+        }
+        session.won = false;
+      }
+    });
+
+    $("#face_down").draggable({
+      helper: "clone"/*,
+      connectToSortable: "#hand"*/
+    });
+
+    $("#face_up").draggable({
+      helper: "clone",
+      start: function(event, ui) {
+        //console.log(event);
+      }/*,
+      connectToSortable: "#hand"*/
+    });
+
+    function disableDragging() {
+      $("#face_down").draggable("disable");
+      $("#face_up").draggable("disable");
+    }
+
+    function enableDragging() {
+      $("#face_down").draggable("enable");
+      $("#face_up").draggable("enable");
+    }
+
     function cardElement(card, newCard) {
       const suit = Object.keys(card)[0];
-      return $(`<div class='card ${suit}${newCard ? ' new-card' : ''}'>${card[suit]}</div>`);
+      return $(`<div data-suit='${suit}' class='card ${suit}${newCard ? ' new-card' : ''}'>${card[suit]}</div>`);
     }
 
     function faceDownCard() {
@@ -92,6 +146,7 @@ $(function () {
       $("#game").hide();
       $("#winner_review").hide();
       $("body").removeClass('your-turn');
+      disableDragging();
       $("#other-hands").html("");
       $("#full-disclosure").hide();
       clearFaceUp();
@@ -293,6 +348,11 @@ $(function () {
         });
 
         $("body").toggleClass('your-turn', notification.player.id === session.id);
+        if (notification.player.id === session.id) {
+          enableDragging();
+        } else {
+          disableDragging();
+        }
         $("#game").show();
         $("#winner_review").hide();
         if (notification.previousPlayer && notification.previousPlayer.id === session.id) {
@@ -323,6 +383,8 @@ $(function () {
         showHand($("#winning-hand"), winningHand.hand);
         $("#try-again").show();
         $("body").removeClass('your-turn');
+        disableDragging();
+        
         $("#other-hands").html("");
 
         Object.keys(notification.hands)
@@ -442,7 +504,7 @@ $(function () {
 
     function getCardFromElement(cardElement) {
       const card = $(cardElement);
-      const suit = card[0].className.replace('new-card', '').replace('card', '').trim();
+      const suit = card.data('suit');
       const cardData = {};
       cardData[suit] = card.text();
       
@@ -579,39 +641,6 @@ $(function () {
     socket.on('your-turn', function(token) {
       session.go_token = token;
     });
-
-    $("#face_up").on("click", ".card", function(event) {
-        socket.emit('take_face_up', session.go_token);
-    });
-
-    $("#face_down").click(function(event) {
-        socket.emit('take_face_down', session.go_token);
-    });
-
-    $("#hand").on("click", ".card", function(event) {
-        if (!session.go_token || $("#hand .new-card").length === 0) {
-            return;
-        }
-
-        const card = $(event.currentTarget);
-        $("#hand .new-card").removeClass("new-card");
-
-        const cardData = getCardFromElement(card);
-        session.manualCardOrder.splice(findCardIndexInHand(session.manualCardOrder, cardData), 1); //remove the card stored at the manual card order
-
-        animateCard(card, $("#face_up"), card, () => {
-          socket.emit('return_card', {
-            card: cardData,
-            token: session.go_token
-        });
-        session.go_token = null;
-
-        if (session.won) {
-          socket.emit('win');
-        }
-        session.won = false;
-        });
-      });
 
       $("#i-have-won").click(function() {
         if (session.hand.length !== 7) {
