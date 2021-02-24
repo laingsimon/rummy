@@ -22,4 +22,5 @@ When it is your turn the background will turn green. The other players are shown
 
 If you want to take a card from the deck, drag a card from the deck (purple back). Otherwise drag a face-up card to your hand. Drag the card you want to discard to the face-up pile (to the left of the deck).
 
+# Winning
 If your move leaves you with a winning hand, click the button under the deck. Make sure you discard your card first. The other players will need to review and confirm you have won. Once at least half of the other player agree then everyone's hand will be shown.
