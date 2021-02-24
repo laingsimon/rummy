@@ -18,8 +18,8 @@ If you start a game, you are responsible for admitting players who join, and sta
 # Taking turns
 
 When playing, your hand will be shown towards the top of the page. You can re-arrange them as you see fit.
-When it is your turn the background will turn green. The other players are shown above your hand, with the current player highlighted in green.
+When it is your turn the background will turn green. The other players are shown below your hand, with the current player highlighted in green.
 
-If you want to take a card from the deck, click on the deck (purple back). Otherwise click on a card to pick it up or put it back.
+If you want to take a card from the deck, drag a card from the deck (purple back). Otherwise drag a face-up card to your hand. Drag the card you want to discard to the face-up pile (to the left of the deck).
 
-Tick the option, BEFORE, returning a card to indicate that you've won.
+If your move leaves you with a winning hand, click the button under the deck. Make sure you discard your card first. The other players will need to review and confirm you have won. Once at least half of the other player agree then everyone's hand will be shown.
