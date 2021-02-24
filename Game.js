@@ -118,7 +118,7 @@ module.exports.Game = class Game {
 
         const player = this.lobby[playerId];
         if (!player) {
-            this.error(this.owner.socket, `Player ${playerId} not in the lobby, lobby contains: ${JSON.stringify(Object.keys(this.lobby))}`);
+            console.log(`Player ${playerId} not in the lobby, lobby contains: ${JSON.stringify(Object.keys(this.lobby))}`);
             return;
         }
 
