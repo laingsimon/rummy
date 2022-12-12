@@ -9,7 +9,7 @@
     "body-parser": "^1.19.0",
     "colors": "^1.4.0",
     "cookie-parser": "^1.4.5",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "form-data": "^2.1.2",
     "socket.io": "^2.4.0",
     "uuid": "^7.0.3"
